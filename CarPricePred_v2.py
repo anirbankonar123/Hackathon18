@@ -28,17 +28,24 @@ from sklearn.linear_model import SGDRegressor
 from keras.models import Sequential
 from keras.layers import Dense   
 from keras import optimizers
+from azureml import services
 
 carSales = pd.read_csv("C:/users/hackuser1/Hackathon18/data.csv")
+
+Mean_price_by_Make=carSales.groupby(['Make'])['MSRP'].mean()
+print(Mean_price_by_Make)
 
 carSales.info()
 chevrolet = carSales['Make'] == "Chevrolet"
 carSales = carSales[chevrolet]
 carSales = pd.DataFrame(carSales.values,columns = ["Make", "Model", "Year", "Engine Fuel Type","Engine HP","Engine Cylinders","Transmission Type","Driven_Wheels","Number of Doors","Market Category","Vehicle Size","Vehicle Style","highway MPG","city MPG","Popularity","MSRP"])
 carSales.head()
-
-carSales.describe()
-
+carSales["MSRP"].mean()
+carSales["MSRP"].std()
+carSales["MSRP"].mode()
+carSales["MSRP"].median()
+carSales["MSRP"].max()
+carSales["MSRP"].min()
 
 carSales["Number of Doors"] = carSales["Number of Doors"].replace("?",0)
 carSales["Number of Doors"] = carSales["Number of Doors"].astype('float32')
@@ -48,6 +55,23 @@ carSales["Engine HP"] = carSales["Engine HP"].replace("?",0)
 carSales["Engine HP"] = carSales["Engine HP"].astype("float32")
 carSales["Year"] = carSales["Year"].astype("float32")
 carSales["Age"] = 2017 - carSales["Year"]
+
+#encoder = LabelEncoder()
+#door_cat = carSales["Number of Doors"]
+#door_cat_encoded = encoder.fit_transform(door_cat)
+#carSales["door_encoded"] = door_cat_encoded
+#encoder.classes_
+#carSales.corr()
+#
+#attributes = ["MSRP","Engine HP","door_encoded"]
+#scatter_matrix(carSales[attributes],figsize=(12,8))
+
+carSales.hist(bins=50,figsize=(20,15))
+plt.show()
+
+carSales.describe()
+carSales.info()
+
 
 
 carSales["Age"].value_counts()
@@ -155,7 +179,7 @@ imputer.fit(carSales_test_X_num)
 
 scaler = StandardScaler()
 X = scaler.fit_transform(carSales_X_num)
-test_X = scaler.fit_transform(carSales_test_X_num)
+test_X = scaler.transform(carSales_test_X_num)
 
 car_trans_type = carSales_X["Transmission Type"]
 encoder = LabelBinarizer()
@@ -412,21 +436,21 @@ print(test_Y.shape)
 
 model = Sequential()
  
-model.add(Dense(20,input_dim=(X.shape[1]),activation='relu'))
-model.add(Dense(10,activation='relu'))
-model.add(Dense(1))
-model.summary()
+#model.add(Dense(20,input_dim=(X.shape[1]),activation='relu'))
+#model.add(Dense(10,activation='relu'))
+#model.add(Dense(1))
+#model.summary()
 
 model.add(Dense(40,input_dim=(X.shape[1]),activation='relu'))
 model.add(Dense(20,activation='relu'))
 model.add(Dense(1))
 model.summary()
 
-model.add(Dense(40,input_dim=(X.shape[1]),activation='relu'))
-model.add(Dense(30,activation='relu'))
-model.add(Dense(10,activation='relu'))
-model.add(Dense(1))
-model.summary()
+#model.add(Dense(40,input_dim=(X.shape[1]),activation='relu'))
+#model.add(Dense(30,activation='relu'))
+#model.add(Dense(10,activation='relu'))
+#model.add(Dense(1))
+#model.summary()
 
 myOptimizer = optimizers.Adam(lr=0.01, beta_1=0.9, beta_2=0.999, epsilon=0.01, decay=0.0)
 model.compile(loss='mean_squared_error', optimizer=myOptimizer)
