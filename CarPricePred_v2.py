@@ -29,7 +29,7 @@ from keras.models import Sequential
 from keras.layers import Dense   
 from keras import optimizers
 
-carSales = pd.read_csv("/home/anirban/Hackathon/data.csv")
+carSales = pd.read_csv("C:/users/hackuser1/Hackathon18/data.csv")
 
 carSales.info()
 chevrolet = carSales['Make'] == "Chevrolet"
@@ -48,7 +48,6 @@ carSales["Engine HP"] = carSales["Engine HP"].replace("?",0)
 carSales["Engine HP"] = carSales["Engine HP"].astype("float32")
 carSales["Year"] = carSales["Year"].astype("float32")
 carSales["Age"] = 2017 - carSales["Year"]
-
 
 
 carSales["Age"].value_counts()
@@ -443,7 +442,17 @@ plt.show()
 carSales_predictions = model.predict(test_X)
 dl_mse = mean_squared_error(test_Y, carSales_predictions)
 dl_rmse = np.sqrt(dl_mse)
-dl_rmse #3557
+dl_rmse #3477
+
+from xgboost import XGBRegressor
+
+xgboost_reg = XGBRegressor()
+xgboost_reg.fit(X,Y)
+
+carSales_predictions = xgboost_reg.predict(test_X)
+xgboost_mse = mean_squared_error(test_Y, carSales_predictions)
+xgboost_rmse = np.sqrt(xgboost_mse)
+xgboost_rmse#3538
 
 
 
