@@ -120,7 +120,6 @@ carSales_X_num = carSales_X_num.drop("highway MPG",axis=1)
 carSales_X_num = carSales_X_num.drop("Popularity",axis=1)
 carSales_X_num = carSales_X_num.drop("Age-cat",axis=1)
 
-
 carSales_test_X_num = carSales_test_X
 carSales_test_X_num  = carSales_test_X_num.drop("Make",axis=1)
 carSales_test_X_num  = carSales_test_X_num.drop("Year",axis=1)
@@ -135,7 +134,6 @@ carSales_test_X_num = carSales_test_X_num.drop("Vehicle Size",axis=1)
 carSales_test_X_num = carSales_test_X_num.drop("highway MPG",axis=1)
 carSales_test_X_num = carSales_test_X_num.drop("Popularity",axis=1)
 carSales_test_X_num = carSales_test_X_num.drop("Age-cat",axis=1)
-
 
 print(carSales_X_num.shape)
 print(carSales_Y.shape)
