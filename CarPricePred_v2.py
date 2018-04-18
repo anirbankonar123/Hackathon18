@@ -56,23 +56,12 @@ carSales["Engine HP"] = carSales["Engine HP"].astype("float32")
 carSales["Year"] = carSales["Year"].astype("float32")
 carSales["Age"] = 2017 - carSales["Year"]
 
-#encoder = LabelEncoder()
-#door_cat = carSales["Number of Doors"]
-#door_cat_encoded = encoder.fit_transform(door_cat)
-#carSales["door_encoded"] = door_cat_encoded
-#encoder.classes_
-#carSales.corr()
-#
-#attributes = ["MSRP","Engine HP","door_encoded"]
-#scatter_matrix(carSales[attributes],figsize=(12,8))
 
 carSales.hist(bins=50,figsize=(20,15))
 plt.show()
 
 carSales.describe()
 carSales.info()
-
-
 
 carSales["Age"].value_counts()
 carSales["Age-cat"] = np.ceil(carSales["Age"] / 5)
