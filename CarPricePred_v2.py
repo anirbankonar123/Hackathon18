@@ -396,12 +396,12 @@ lasso_rmse#6851
 
 from sklearn.ensemble import GradientBoostingRegressor
 
-gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=3, learning_rate=1.0, random_state=42)
-gbrt.fit(X, Y)
-carSales_predictions = gbrt.predict(test_X)
-gbrt_mse = mean_squared_error(test_Y, carSales_predictions)
-gbrt_rmse = np.sqrt(gbrt_mse)
-gbrt_rmse#5182
+    gbrt = GradientBoostingRegressor(max_depth=2, n_estimators=3, learning_rate=1.0, random_state=42)
+    gbrt.fit(X, Y)
+    carSales_predictions = gbrt.predict(test_X)
+    gbrt_mse = mean_squared_error(test_Y, carSales_predictions)
+    gbrt_rmse = np.sqrt(gbrt_mse)
+    gbrt_rmse#5182
 
 gbrt_slow = GradientBoostingRegressor(max_depth=2, n_estimators=200, learning_rate=0.1, random_state=42)
 gbrt_slow.fit(X, Y)
