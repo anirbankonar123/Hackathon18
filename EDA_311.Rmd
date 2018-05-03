@@ -1,0 +1,163 @@
+---
+title: "EDA_311_Data"
+output:
+  html_document:
+    df_print: paged
+Author: Kishan Choudhury,Anirban Konar
+---
+
+This document contains an exploratory data analysis of 311 Call Center Data. We perform TimeSeries Analysis of the Data
+ 
+```{r}
+DataRoot<-"D:\\cognizant\\Hackathon\\"
+InputFile<-file.path(DataRoot,"311.csv")
+data<-read.csv(InputFile)
+#Sort Data on the basis of Date
+data<-data[order(as.Date(data$Month, format="%d/%m/%Y")),]
+data$Month<-NULL
+data$Svc.Level....answered.w.i.60.sec.<-NULL
+data$Avg.Speed.Answer..sec.<-NULL
+data$Transferred.Calls..<-NULL
+TimeSeriesData<-ts(data,frequency = 12,start=c(2007,4))
+TimeSeriesData
+```
+Lets analyze the Call Volume 
+```{r}
+plot.ts(TimeSeriesData)
+```
+
+
+To estimate the trend, seasonal and irregular components of this time series,lets decompose the timeseries
+```{r}
+timeseriescomponents<-decompose(TimeSeriesData)
+plot(timeseriescomponents)
+```
+
+
+We can see that the timeseries has a seasonal component.
+
+
+Holt-Winters Exponential Smoothing:
+If we have a time series that can be described using an additive model with increasing or decreasing trend and seasonality, we can use Holt-Winters exponential smoothing to make short-term forecasts.
+
+Holt-Winters exponential smoothing estimates the level, slope and seasonal component at the current time point. Smoothing is controlled by three parameters: alpha, beta, and gamma, for the estimates of the level, slope b of the trend component, and the seasonal component, respectively, at the current time point. The parameters alpha, beta and gamma all have values between 0 and 1, and values that are close to 0 mean that relatively little weight is placed on the most recent observations when making forecasts of future values.
+
+```{r}
+timeseriesforecasts <- HoltWinters(TimeSeriesData)
+timeseriesforecasts
+```
+The estimated values of alpha, beta and gamma are 0.70, 0.08, and 1, respectively. The value of alpha (0.70) is relatively high, indicating that the estimate of the level at the current time point is based upon mostly recent observations. The value of beta is 0.08, indicating that the estimate of the slope b of the trend component is not updated much over the time series, and instead is almost equal to its initial value. This makes good intuitive sense, as the level changes quite a bit over the time series, but the slope b of the trend component remains roughly the same. In contrast, the value of gamma (1) is high, indicating that the estimate of the seasonal component at the current time point is just based upon very recent observations.
+
+We can plot the original time series as a black line, with the forecasted values as a red line on top of that:
+
+```{r}
+plot(timeseriesforecasts)
+```
+
+
+To make forecasts for future times not included in the original time series, we use the "forecast.HoltWinters()" function in the "forecast" package. For instance, inorder to forecast for the next 3 years, we provide h=36(months)
+```{r}
+library(forecast)
+timeseriesforecasts2 <- forecast:::forecast.HoltWinters(timeseriesforecasts, h=36)
+plot(timeseriesforecasts2)
+```
+
+
+The forecasts are shown as a blue line, and the dark grey and grey shaded areas show 80% and 95% prediction intervals, respectively.
+
+We can investigate whether the predictive model can be improved upon by checking whether the in-sample forecast errors show non-zero autocorrelations at lags 1-20, by making a correlogram and carrying out the Ljung-Box test:
+
+```{r}
+acf(timeseriesforecasts2$residuals, lag.max=20,na.action = na.pass)
+```
+```{r}
+Box.test(timeseriesforecasts2$residuals, lag=20, type="Ljung-Box")
+```
+
+The correlogram shows that the autocorrelations for the in-sample forecast errors exceed the significance bounds for lags 1-20. Furthermore, the p-value for Ljung-Box test is 0.007, indicating that there is evidence of non-zero autocorrelations at lags 1-20.
+
+This indicates that the model can be improved upon. We can try some other models such as ARIMA.
+
+ARIMA: 
+
+Exponential smoothing methods are useful for making forecasts, and make no assumptions about the correlations between successive values of the time series. However, if we want to make prediction intervals for forecasts made using exponential smoothing methods, the prediction intervals require that the forecast errors are uncorrelated and are normally distributed with mean zero and constant variance.
+
+While exponential smoothing methods do not make any assumptions about correlations between successive values of the time series, in some cases we can make a better predictive model by taking correlations in the data into account. Autoregressive Integrated Moving Average (ARIMA) models include an explicit statistical model for the irregular component of a time series, that allows for non-zero autocorrelations in the irregular component.
+
+Differencing a Time Series:
+
+ARIMA models are defined for stationary time series. Therefore, if we start off with a non-stationary time series, we will first need to 'difference' the time series until we obtain a stationary time series. If we have to difference the time series d times to obtain a stationary series, then we have an ARIMA(p,d,q) model, where d is the order of differencing used.
+
+We can difference a time series using the "diff()" function in R. For example, 
+
+```{r}
+TimeSeriesDataDiff <- diff(TimeSeriesData, differences=1)
+plot.ts(TimeSeriesDataDiff)
+```
+
+The resulting time series of first differences (above) does not appear to be stationary in mean. Therefore, we can difference the time series twice, to see if that gives us a stationary time series:
+
+```{r}
+TimeSeriesDataDiff2 <- diff(TimeSeriesData, differences=2)
+plot.ts(TimeSeriesDataDiff2)
+```
+
+The time series of second differences (above) does appear to be stationary in mean and variance, as the level of the series stays roughly constant over time, and the variance of the series appears roughly constant over time. Thus, it appears that we need to difference the time series twice in order to achieve a stationary series. So, we shall be using d=2 in our ARIMA(p.d.q) model.
+
+The next step is to select the appropriate ARIMA model, which means finding the values of most appropriate values of p and q for an ARIMA(p,d,q) model. To do this, we usually need to examine the correlogram and partial correlogram of the stationary time series.
+
+To plot the correlogram, we type:
+```{r}
+acf(TimeSeriesDataDiff2, lag.max=20)  
+```
+
+To plot the partial correlogram for lags 1-20 for the once differenced time series, and get the values of the partial autocorrelations, we use the "pacf()" function, by typing:
+
+```{r}
+pacf(TimeSeriesDataDiff2, lag.max=20) 
+```
+
+We see from the correlogram that the autocorrelation at lag 1 exceeds the significance bounds. The partial correlogram shows that the partial autocorrelations at lags 1, 2 ,3 and 4 exceed the significance bounds, are negative, and are slowly decreasing in magnitude with increasing lag  The partial autocorrelations tail off to zero after lag 4.
+
+Since the correlogram is zero after lag 1, and the partial correlogram tails off to zero after lag 4, this means that the following ARMA (autoregressive moving average) models are possible for the time series of first differences:
+
+an ARMA(4,0) model, that is, an autoregressive model of order p=4, since the partial autocorrelogram is zero after lag 4, and the autocorrelogram tails off to zero (although perhaps too abruptly for this model to be appropriate)
+an ARMA(0,1) model, that is, a moving average model of order q=1, since the autocorrelogram is zero after lag 1 and the partial autocorrelogram tails off to zero
+an ARMA(p,q) model, that is, a mixed model with p and q greater than 0, since the autocorrelogram and partial correlogram tail off to zero (although the correlogram probably tails off to zero too abruptly for this model to be appropriate)
+
+We assume that the model with the fewest parameters is best. The ARMA(4,0) model has 4 parameters, the ARMA(0,1) model has 1 parameter, and the ARMA(p,q) model has at least 2 parameters. Therefore, the ARMA(0,1) model is taken as the best model.
+
+```{r}
+timeseriesarima <- arima(TimeSeriesData, order=c(0,2,1)) # fit an ARIMA(0,2,1) model
+timeseriesarima
+```
+
+We can then use the ARIMA model to make forecasts for future values of the time series, using the "forecast.Arima()" function in the "forecast" R package. 
+
+```{r}
+timeseriesarimaforecasts <- forecast:::forecast.Arima(timeseriesarima, h=36)
+
+```
+
+```{r}
+plot(timeseriesarimaforecasts)
+```
+
+As before,we can investigate whether the predictive model can be improved upon by checking whether the in-sample forecast errors show non-zero autocorrelations at lags 1-20, by making a correlogram and carrying out the Ljung-Box test:
+
+```{r}
+acf(timeseriesarimaforecasts$residuals, lag.max=20,na.action = na.pass)
+
+```
+We also perform Ljung Box Test
+```{r}
+Box.test(timeseriesarimaforecasts$residuals, lag=20, type="Ljung-Box")
+```
+
+The correlogram shows that the autocorrelations for the in-sample forecast errors exceed the significance bounds for many of the lags 1-20. Furthermore, the p-value for Ljung-Box test is very low, indicating that there is evidence of non-zero autocorrelations at lags 1-20.
+
+This indicates that the ARIMA model can also be improved upon. 
+
+Next, we move on to Python and try some other approaches using Deep Learning
+
+
