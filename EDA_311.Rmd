@@ -9,18 +9,26 @@ Author: Kishan Choudhury,Anirban Konar
 This document contains an exploratory data analysis of 311 Call Center Data. We perform TimeSeries Analysis of the Data
  
 ```{r}
-DataRoot<-"D:\\cognizant\\Hackathon\\"
-InputFile<-file.path(DataRoot,"311.csv")
+DataRoot<-"C:/Users/Hackuser1/Hackathon18"
+InputFile<-file.path(DataRoot,"311_call_metrics.csv")
 data<-read.csv(InputFile)
 #Sort Data on the basis of Date
-data<-data[order(as.Date(data$Month, format="%d/%m/%Y")),]
-data$Month<-NULL
-data$Svc.Level....answered.w.i.60.sec.<-NULL
-data$Avg.Speed.Answer..sec.<-NULL
-data$Transferred.Calls..<-NULL
-TimeSeriesData<-ts(data,frequency = 12,start=c(2007,4))
+data<-data[order(as.Date(data$month, format="%d%b%Y")),]
+data$month<-NULL
+data$svc_level_answered_w_i_60_sec<-NULL
+data$avg_speed_answer_sec<-NULL
+data$transferred_calls<-NULL
+TimeSeriesData<-ts(data,frequency = 12,start=c(2007,4),end=c(2016,12))
+TimeSeriesTestData<-ts(data,frequency = 12,start=c(2017,1),end=c(2017,12))
 TimeSeriesData
+## This will give NA(s) in some locales; setting the C locale
+## as in the commented lines will overcome this on most systems.
+## lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
+x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+z <- as.Date(data$month, "%d%b%Y")
+## Sys.setlocale("LC_TIME", lct)
 ```
+
 Lets analyze the Call Volume 
 ```{r}
 plot.ts(TimeSeriesData)
@@ -58,10 +66,19 @@ plot(timeseriesforecasts)
 To make forecasts for future times not included in the original time series, we use the "forecast.HoltWinters()" function in the "forecast" package. For instance, inorder to forecast for the next 3 years, we provide h=36(months)
 ```{r}
 library(forecast)
-timeseriesforecasts2 <- forecast:::forecast.HoltWinters(timeseriesforecasts, h=36)
+timeseriesforecasts2 <- forecast:::forecast.HoltWinters(timeseriesforecasts, h=12)
 plot(timeseriesforecasts2)
 ```
-
+Lets calculate the RMSE of our predictions:
+```{r}
+timeseriesforecasts2$mean
+TimeSeriesTestData
+RMSE <- function(y,yhat)
+{
+  sqrt(mean((y-yhat)**2))
+}
+RMSE(TimeSeriesTestData,timeseriesforecasts2$mean)
+```
 
 The forecasts are shown as a blue line, and the dark grey and grey shaded areas show 80% and 95% prediction intervals, respectively.
 
@@ -135,19 +152,23 @@ timeseriesarima
 We can then use the ARIMA model to make forecasts for future values of the time series, using the "forecast.Arima()" function in the "forecast" R package. 
 
 ```{r}
-timeseriesarimaforecasts <- forecast:::forecast.Arima(timeseriesarima, h=36)
+timeseriesarimaforecasts <- forecast:::forecast.Arima(timeseriesarima, h=12)
 
 ```
 
 ```{r}
 plot(timeseriesarimaforecasts)
 ```
-
+Lets calculate the RMSE of our predictions:
+```{r}
+timeseriesarimaforecasts$mean
+TimeSeriesTestData
+RMSE(TimeSeriesTestData,timeseriesarimaforecasts$mean)
+```
 As before,we can investigate whether the predictive model can be improved upon by checking whether the in-sample forecast errors show non-zero autocorrelations at lags 1-20, by making a correlogram and carrying out the Ljung-Box test:
 
 ```{r}
 acf(timeseriesarimaforecasts$residuals, lag.max=20,na.action = na.pass)
-
 ```
 We also perform Ljung Box Test
 ```{r}
